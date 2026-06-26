@@ -18,7 +18,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.core.exceptions import (
     AuthenticationError,
-    ConflictError,
     EmailAlreadyExistsError,
 )
 from app.core.logging import get_logger
@@ -28,7 +27,6 @@ from app.core.security import (
     hash_refresh_token,
     verify_password,
 )
-from app.models.session import Session
 from app.models.user import User
 from app.repositories.session_repository import SessionRepository
 from app.repositories.user_repository import UserRepository
