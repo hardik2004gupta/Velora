@@ -1,4 +1,4 @@
-"""APIKey ORM model."""
+"""APIKey ORM model — scoped to an Organization."""
 
 from __future__ import annotations
 
@@ -13,22 +13,47 @@ from app.database.base import Base, UUIDMixin
 
 
 class APIKey(Base, UUIDMixin):
-    """Programmatic access key scoped to a single user."""
+    """
+    Programmatic access key scoped to a single Organization.
+
+    Key security model:
+    - The full key is returned ONCE at creation — never stored in plaintext.
+    - ``key_prefix`` (first 8 chars) is stored for UI display and fast lookup.
+    - ``hashed_key`` is a bcrypt hash of the full key for verification.
+    - ``revoked`` is set to True instead of deleting rows (audit trail).
+    """
 
     __tablename__ = "api_keys"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    key_prefix: Mapped[str] = mapped_column(String(10), nullable=False)
+    key_prefix: Mapped[str] = mapped_column(String(12), nullable=False, index=True)
     hashed_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str] = mapped_column(String(20), nullable=False, default="developer")
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    user: Mapped["User"] = relationship("User", back_populates="api_keys")  # type: ignore[name-defined]  # noqa: F821
+    # Relationships
+    organization: Mapped["Organization"] = relationship(  # type: ignore[name-defined]  # noqa: F821
+        "Organization", back_populates="api_keys"
+    )
+
+    @property
+    def is_active(self) -> bool:
+        """Return True if the key is not revoked and not expired."""
+        from datetime import UTC
+        if self.revoked:
+            return False
+        if self.expires_at and self.expires_at < datetime.now(UTC):
+            return False
+        return True
 
     def __repr__(self) -> str:
-        return f"<APIKey id={self.id!s} prefix={self.key_prefix!r}>"
+        return f"<APIKey id={self.id!s} prefix={self.key_prefix!r} revoked={self.revoked}>"

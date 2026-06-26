@@ -38,6 +38,10 @@ class BaseRepository(Generic[ModelT]):
         """Return a record by primary key, or None if not found."""
         return await self._session.get(self.model, entity_id)
 
+    async def get(self, entity_id: uuid.UUID) -> ModelT | None:
+        """Alias for get_by_id."""
+        return await self.get_by_id(entity_id)
+
     async def get_all(self) -> list[ModelT]:
         """Return all records for this model (use with caution on large tables)."""
         result = await self._session.execute(select(self.model))

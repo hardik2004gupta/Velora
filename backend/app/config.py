@@ -84,7 +84,8 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     jwt_secret_key: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
     jwt_algorithm: str = "HS256"
-    jwt_access_token_expire_minutes: Annotated[int, Field(ge=1)] = 1440
+    jwt_access_token_expire_minutes: Annotated[int, Field(ge=1)] = 15
+    jwt_refresh_token_expire_days: Annotated[int, Field(ge=1)] = 30
 
     # -------------------------------------------------------------------------
     # Provider API keys (optional at startup — validated per-request)

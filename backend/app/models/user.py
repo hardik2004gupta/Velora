@@ -18,10 +18,14 @@ class User(Base, UUIDMixin, TimestampMixin):
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    # Relationships — defined here, populated in Phase 2
-    api_keys: Mapped[list["APIKey"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
-        "APIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    # Relationships
+    memberships: Mapped[list["Membership"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
+        "Membership", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    )
+    sessions: Mapped[list["Session"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
+        "Session", back_populates="user", cascade="all, delete-orphan", lazy="select"
     )
     requests: Mapped[list["Request"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "Request", back_populates="user", lazy="select"

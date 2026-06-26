@@ -107,6 +107,10 @@ class AdminRequiredError(PermissionDeniedError):
     error_code = "ADMIN_REQUIRED"
 
 
+# Alias used throughout the service layer for clarity
+ForbiddenError = PermissionDeniedError
+
+
 # --- 404 Not Found -----------------------------------------------------------
 
 

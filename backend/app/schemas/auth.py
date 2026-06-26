@@ -10,6 +10,11 @@ from pydantic import EmailStr, Field
 from app.schemas.common import VeloraBaseModel
 
 
+# ---------------------------------------------------------------------------
+# Request schemas
+# ---------------------------------------------------------------------------
+
+
 class RegisterRequest(VeloraBaseModel):
     """Body for POST /auth/register."""
 
@@ -25,12 +30,30 @@ class LoginRequest(VeloraBaseModel):
     password: str
 
 
-class TokenResponse(VeloraBaseModel):
-    """Response body for POST /auth/login."""
+class RefreshRequest(VeloraBaseModel):
+    """Body for POST /auth/refresh."""
+
+    refresh_token: str
+
+
+class LogoutRequest(VeloraBaseModel):
+    """Body for POST /auth/logout."""
+
+    refresh_token: str
+
+
+# ---------------------------------------------------------------------------
+# Response schemas
+# ---------------------------------------------------------------------------
+
+
+class TokenPairResponse(VeloraBaseModel):
+    """Token pair issued on login or refresh."""
 
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
-    expires_in: int
+    expires_in: int  # access token TTL in seconds
 
 
 class UserResponse(VeloraBaseModel):
@@ -40,4 +63,18 @@ class UserResponse(VeloraBaseModel):
     email: str
     full_name: str
     is_admin: bool
+    is_verified: bool
     created_at: datetime
+
+
+class RegisterResponse(VeloraBaseModel):
+    """Response body for POST /auth/register."""
+
+    user: UserResponse
+    tokens: TokenPairResponse
+
+
+class LogoutResponse(VeloraBaseModel):
+    """Response body for POST /auth/logout."""
+
+    message: str = "Logged out successfully."

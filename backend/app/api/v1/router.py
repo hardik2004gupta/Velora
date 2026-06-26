@@ -17,15 +17,19 @@ from app.api.v1 import (
     auth,
     chat,
     health,
+    organizations,
     providers,
     requests,
     settings,
+    users,
 )
 
 v1_router = APIRouter()
 
 v1_router.include_router(health.router, tags=["health"])
 v1_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+v1_router.include_router(users.router, prefix="/users", tags=["users"])
+v1_router.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
 v1_router.include_router(chat.router, prefix="/chat", tags=["chat"])
 v1_router.include_router(requests.router, prefix="/requests", tags=["requests"])
 v1_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
