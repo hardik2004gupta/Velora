@@ -94,3 +94,72 @@ export interface Organization {
 }
 
 export type RoutingStrategy = "auto" | "cheapest" | "fastest" | "quality";
+
+// ---------------------------------------------------------------------------
+// Chat — Phase 2
+// ---------------------------------------------------------------------------
+
+export type MessageRole = "system" | "user" | "assistant";
+
+export interface ChatMessage {
+  role: MessageRole;
+  content: string;
+}
+
+export interface ChatRequest {
+  messages: ChatMessage[];
+  provider: string;
+  model?: string;
+  max_tokens?: number;
+  temperature?: number;
+  conversation_id?: string;
+}
+
+export interface ChatResponse {
+  content: string;
+  provider: string;
+  model: string;
+  finish_reason: string;
+}
+
+export type StreamChunkType = "delta" | "done" | "error";
+
+export interface StreamChunk {
+  type: StreamChunkType;
+  content?: string;       // type=delta
+  provider?: string;      // type=done
+  model?: string;         // type=done
+  finish_reason?: string; // type=done
+  message?: string;       // type=error
+}
+
+// A message in the local conversation UI (extends ChatMessage with metadata)
+export interface ConversationMessage extends ChatMessage {
+  id: string;
+  timestamp: Date;
+  isStreaming?: boolean;
+  provider?: string;
+  model?: string;
+  error?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Providers — Phase 2
+// ---------------------------------------------------------------------------
+
+export interface ModelInfo {
+  id: string;
+  context_window: number;
+  quality_score: number;
+}
+
+export interface ProviderInfo {
+  id: string;
+  name: string;
+  status: "healthy" | "down";
+  models: ModelInfo[];
+}
+
+export interface ProvidersResponse {
+  providers: ProviderInfo[];
+}

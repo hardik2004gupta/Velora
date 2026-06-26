@@ -46,6 +46,10 @@ venv/
 ENV/
 env/
 
+# Re-include frontend source dirs that matched Python patterns above
+!frontend/lib/
+!frontend/lib/**
+
 # Poetry
 poetry.lock    # keep in version control — remove this line if you prefer
 
