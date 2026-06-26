@@ -1,13 +1,21 @@
-"""Provider listing and health endpoints."""
+"""Provider listing and health endpoints — Phase 5."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.session import get_db_session
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.providers.registry import get_registry
-from app.schemas.provider import ModelInfo, ProviderInfo, ProvidersResponse
+from app.schemas.provider import (
+    ModelInfo,
+    ProviderInfo,
+    ProvidersResponse,
+    ProvidersStatusResponse,
+)
+from app.services.health_service import HealthService
 
 router = APIRouter()
 
@@ -22,7 +30,7 @@ _DISPLAY_NAMES: dict[str, str] = {
 async def list_providers(
     _user: User = Depends(get_current_user),
 ) -> ProvidersResponse:
-    """Return all registered providers, their available models, and live health status."""
+    """Return all registered providers, their available models, and a live health status."""
     registry = get_registry()
     result: list[ProviderInfo] = []
 
@@ -49,7 +57,20 @@ async def list_providers(
     return ProvidersResponse(providers=result)
 
 
-# Phase 3+ stub — kept for the router registration
-@router.get("/status", summary="Provider health detail (Phase 3+)")
-async def provider_status_detail() -> dict:
-    return {"message": "Detailed health metrics are implemented in Phase 3."}
+@router.get(
+    "/status",
+    response_model=ProvidersStatusResponse,
+    summary="Provider health detail with latency and uptime",
+)
+async def provider_status(
+    _user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> ProvidersStatusResponse:
+    """
+    Run a live health check against every registered provider, persist the result,
+    and return status, measured latency, rolling-average latency, and last-checked
+    timestamp for each.
+    """
+    svc = HealthService(db)
+    results = await svc.check_all_providers()
+    return ProvidersStatusResponse(providers=results)

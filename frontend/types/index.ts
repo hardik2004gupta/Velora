@@ -90,6 +90,88 @@ export interface DashboardOverview {
   period_days: number;
 }
 
+// ---------------------------------------------------------------------------
+// Analytics — Phase 5
+// ---------------------------------------------------------------------------
+
+export interface CostDataPoint {
+  date: string;
+  cost: number;
+  openai: number;
+  anthropic: number;
+  gemini: number;
+}
+
+export interface CostOverTime {
+  data: CostDataPoint[];
+  period_days: number;
+  total: number;
+}
+
+export interface LatencyDataPoint {
+  date: string;
+  avg_ms: number;
+}
+
+export interface LatencyAnalytics {
+  data: LatencyDataPoint[];
+  avg_ms: number;
+  p50_ms: number | null;
+  p95_ms: number | null;
+  by_provider: Record<string, number>;
+  period_days: number;
+}
+
+export interface ProviderStat {
+  provider: string;
+  requests: number;
+  percentage: number;
+  cost: number;
+  avg_latency_ms: number | null;
+  success_rate: number;
+}
+
+export interface ProviderDistribution {
+  providers: ProviderStat[];
+  period_days: number;
+  total_requests: number;
+}
+
+export interface TokenAnalytics {
+  total_tokens: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  avg_per_request: number;
+  period_days: number;
+}
+
+export interface ConversationAnalytics {
+  total_conversations: number;
+  avg_messages_per_conversation: number;
+  period_days: number;
+}
+
+export interface RoutingInsights {
+  strategy_distribution: Record<string, number>;
+  most_used_strategy: string;
+  most_selected_provider: string;
+  period_days: number;
+}
+
+export interface ProviderStatusDetail {
+  provider: string;
+  status: "healthy" | "degraded" | "down";
+  latency_ms: number | null;
+  avg_latency_ms: number | null;
+  uptime_percentage: number | null;
+  last_checked_at: string;
+  error_message: string | null;
+}
+
+export interface ProvidersStatusResponse {
+  providers: ProviderStatusDetail[];
+}
+
 export interface APIKeyResponse {
   id: string;
   name: string;
