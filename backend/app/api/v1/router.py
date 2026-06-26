@@ -15,12 +15,14 @@ from app.api.v1 import (
     analytics,
     api_keys,
     auth,
+    cache,
     chat,
     health,
     organizations,
     providers,
     requests,
     settings,
+    user_keys,
     users,
 )
 
@@ -37,3 +39,5 @@ v1_router.include_router(providers.router, prefix="/providers", tags=["providers
 v1_router.include_router(api_keys.router, prefix="/organizations/{org_id}/api-keys", tags=["api-keys"])
 v1_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 v1_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+v1_router.include_router(user_keys.router, prefix="/api-keys", tags=["api-keys"])
+v1_router.include_router(cache.router, prefix="/cache", tags=["cache"])

@@ -184,6 +184,31 @@ export interface APIKeyResponse {
   created_at: string;
 }
 
+// ---------------------------------------------------------------------------
+// Personal API keys — Phase 6
+// ---------------------------------------------------------------------------
+
+export interface UserAPIKey {
+  id: string;
+  name: string;
+  key_prefix: string;
+  last_used_at: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserAPIKeyCreateResponse extends UserAPIKey {
+  key: string;
+}
+
+export interface CacheStats {
+  hits: number;
+  misses: number;
+  hit_rate: number;
+  total_requests_served: number;
+  cached_entries: number;
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -221,6 +246,8 @@ export interface ChatResponse {
   model: string;
   finish_reason: string;
   routing_decision: RoutingDecision;
+  cache_hit: boolean;
+  fallback_provider: string | null;
 }
 
 export type StreamChunkType = "delta" | "done" | "error";
@@ -233,6 +260,8 @@ export interface StreamChunk {
   finish_reason?: string;              // type=done
   routing_decision?: RoutingDecision;  // type=done
   message?: string;                    // type=error
+  cache_hit?: boolean;                 // type=done
+  fallback_provider?: string | null;   // type=done
 }
 
 // A message in the local conversation UI (extends ChatMessage with metadata)

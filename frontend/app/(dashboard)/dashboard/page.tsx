@@ -3,18 +3,19 @@
 import Link from "next/link";
 import {
   BarChart3,
-  Zap,
   DollarSign,
   Clock,
   ArrowUpRight,
   AlertCircle,
   MessageSquare,
+  Database,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardOverview } from "@/hooks/useAnalytics";
 import { useRequests } from "@/hooks/useRequests";
+import { useCacheStats } from "@/hooks/useApiKeys";
 import { cn } from "@/lib/utils";
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -53,6 +54,7 @@ function timeAgo(iso: string): string {
 export default function DashboardPage() {
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useDashboardOverview(30);
   const { data: recentData, isLoading: recentLoading } = useRequests({ limit: 5, sortBy: "created_at", sortDir: "desc" });
+  const { data: cacheData, isLoading: cacheLoading } = useCacheStats();
 
   const statCards = [
     {
@@ -87,6 +89,14 @@ export default function DashboardPage() {
       color: "text-purple-400",
       bg: "bg-purple-500/10",
     },
+    {
+      title: "Cache Hit Rate",
+      value: cacheLoading ? null : (cacheData ? `${Math.round(cacheData.hit_rate * 100)}%` : "—"),
+      description: `${cacheData?.hits ?? 0} hits · ${cacheData?.cached_entries ?? 0} entries`,
+      icon: Database,
+      color: "text-cyan-400",
+      bg: "bg-cyan-500/10",
+    },
   ];
 
   return (
@@ -105,7 +115,7 @@ export default function DashboardPage() {
       )}
 
       {/* Stats grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (

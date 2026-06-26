@@ -86,6 +86,8 @@ class ChatResponse(VeloraBaseModel):
     model: str
     finish_reason: str
     routing_decision: RoutingDecision
+    cache_hit: bool = False
+    fallback_provider: str | None = None
 
 
 class StreamChunk(VeloraBaseModel):
@@ -98,6 +100,8 @@ class StreamChunk(VeloraBaseModel):
     finish_reason: str | None = None        # type=done
     routing_decision: RoutingDecision | None = None  # type=done
     message: str | None = None              # type=error
+    cache_hit: bool | None = None           # type=done
+    fallback_provider: str | None = None    # type=done — set when fallback was used
 
 
 # ---------------------------------------------------------------------------
