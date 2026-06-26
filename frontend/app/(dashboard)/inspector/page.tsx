@@ -9,6 +9,8 @@ import {
   Activity,
   Zap,
   ChevronRight,
+  Database,
+  GitBranch,
 } from "lucide-react";
 import {
   Card,
@@ -148,7 +150,15 @@ function CandidateRow({
   );
 }
 
-function DecisionView({ decision }: { decision: RoutingDecision }) {
+function DecisionView({
+  decision,
+  cacheHit,
+  fallbackProvider,
+}: {
+  decision: RoutingDecision;
+  cacheHit?: boolean | null;
+  fallbackProvider?: string | null;
+}) {
   return (
     <div className="space-y-4">
       {/* Decision header */}
@@ -161,6 +171,18 @@ function DecisionView({ decision }: { decision: RoutingDecision }) {
             <Badge variant="success">
               Selected: {decision.selected}
             </Badge>
+            {cacheHit === true && (
+              <Badge variant="secondary" className="flex items-center gap-1 bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
+                <Database className="h-3 w-3" />
+                Cache Hit
+              </Badge>
+            )}
+            {fallbackProvider && (
+              <Badge variant="secondary" className="flex items-center gap-1 bg-amber-500/10 text-amber-400 border-amber-500/30">
+                <GitBranch className="h-3 w-3" />
+                Fallback: {fallbackProvider}
+              </Badge>
+            )}
           </div>
           <CardDescription className="text-sm">{decision.reason}</CardDescription>
         </CardHeader>
@@ -253,6 +275,8 @@ function EmptyState() {
 
 export default function InspectorPage() {
   const lastRoutingDecision = usePlaygroundStore((s) => s.lastRoutingDecision);
+  const lastCacheHit = usePlaygroundStore((s) => s.lastCacheHit);
+  const lastFallbackProvider = usePlaygroundStore((s) => s.lastFallbackProvider);
 
   return (
     <div className="p-6 space-y-6">
@@ -284,7 +308,7 @@ export default function InspectorPage() {
 
       {/* Decision or empty state */}
       {lastRoutingDecision ? (
-        <DecisionView decision={lastRoutingDecision} />
+        <DecisionView decision={lastRoutingDecision} cacheHit={lastCacheHit} fallbackProvider={lastFallbackProvider} />
       ) : (
         <EmptyState />
       )}

@@ -110,7 +110,7 @@ export default function PlaygroundPage() {
           updateLastAssistantMessage(accumulated, false);
         } else if (chunk.type === "done") {
           finalRoutingDecision = chunk.routing_decision;
-          updateLastAssistantMessage(accumulated, true, finalRoutingDecision);
+          updateLastAssistantMessage(accumulated, true, finalRoutingDecision, chunk.cache_hit, chunk.fallback_provider);
         } else if (chunk.type === "error") {
           setError(chunk.message ?? "An error occurred.");
           return;

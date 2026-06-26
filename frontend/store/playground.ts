@@ -33,13 +33,17 @@ interface PlaygroundState {
   manualProvider: string;
   selectedModel: string;
   lastRoutingDecision: RoutingDecision | null;
+  lastCacheHit: boolean | null;
+  lastFallbackProvider: string | null;
   conversationId: string;
 
   addMessage: (msg: ConversationMessage) => void;
   updateLastAssistantMessage: (
     content: string,
     done?: boolean,
-    routingDecision?: RoutingDecision
+    routingDecision?: RoutingDecision,
+    cacheHit?: boolean,
+    fallbackProvider?: string | null
   ) => void;
   setError: (error: string) => void;
   setStreaming: (v: boolean) => void;
@@ -59,12 +63,14 @@ export const usePlaygroundStore = create<PlaygroundState>((set, get) => ({
   manualProvider: prefs.manualProvider,
   selectedModel: prefs.model,
   lastRoutingDecision: null,
+  lastCacheHit: null,
+  lastFallbackProvider: null,
   conversationId: newConversationId(),
 
   addMessage: (msg) =>
     set((s) => ({ messages: [...s.messages, msg] })),
 
-  updateLastAssistantMessage: (content, done = false, routingDecision) =>
+  updateLastAssistantMessage: (content, done = false, routingDecision, cacheHit, fallbackProvider) =>
     set((s) => {
       const msgs = [...s.messages];
       const last = msgs[msgs.length - 1];
@@ -79,6 +85,8 @@ export const usePlaygroundStore = create<PlaygroundState>((set, get) => ({
       return {
         messages: msgs,
         ...(routingDecision ? { lastRoutingDecision: routingDecision } : {}),
+        ...(cacheHit !== undefined ? { lastCacheHit: cacheHit } : {}),
+        ...(fallbackProvider !== undefined ? { lastFallbackProvider: fallbackProvider } : {}),
       };
     }),
 
@@ -116,5 +124,5 @@ export const usePlaygroundStore = create<PlaygroundState>((set, get) => ({
     set({ lastRoutingDecision: decision }),
 
   clearConversation: () =>
-    set({ messages: [], isStreaming: false, lastRoutingDecision: null, conversationId: newConversationId() }),
+    set({ messages: [], isStreaming: false, lastRoutingDecision: null, lastCacheHit: null, lastFallbackProvider: null, conversationId: newConversationId() }),
 }));
