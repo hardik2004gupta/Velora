@@ -1,0 +1,158 @@
+[tool.poetry]
+name = "velora-backend"
+version = "0.1.0"
+description = "Velora — Production-Inspired Multi-Provider AI Inference Platform"
+authors = ["Hardik Gupta <hardikgupta@example.com>"]
+readme = "README.md"
+packages = [{ include = "app" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+# Web framework
+fastapi = "^0.115.0"
+uvicorn = { version = "^0.32.0", extras = ["standard"] }
+
+# Async database
+sqlalchemy = { version = "^2.0.36", extras = ["asyncio"] }
+asyncpg = "^0.30.0"
+alembic = "^1.14.0"
+
+# Validation
+pydantic = "^2.10.0"
+pydantic-settings = "^2.6.0"
+
+# Redis
+redis = { version = "^5.2.0", extras = ["hiredis"] }
+
+# Auth
+pyjwt = { version = "^2.10.0", extras = ["crypto"] }
+passlib = { version = "^1.7.4", extras = ["bcrypt"] }
+
+# HTTP client (for provider calls)
+httpx = "^0.28.0"
+
+# Logging
+structlog = "^24.4.0"
+python-json-logger = "^3.2.0"
+
+# Telemetry (basic)
+opentelemetry-api = "^1.29.0"
+opentelemetry-sdk = "^1.29.0"
+opentelemetry-instrumentation-fastapi = "^0.50b0"
+opentelemetry-instrumentation-sqlalchemy = "^0.50b0"
+opentelemetry-instrumentation-redis = "^0.50b0"
+
+# Background tasks
+apscheduler = "^3.10.4"
+
+# Utilities
+python-multipart = "^0.0.19"
+email-validator = "^2.2.0"
+orjson = "^3.10.12"
+
+[tool.poetry.group.dev.dependencies]
+# Testing
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.0"
+pytest-cov = "^6.0.0"
+httpx = "^0.28.0"
+anyio = { version = "^4.7.0", extras = ["trio"] }
+factory-boy = "^3.3.1"
+faker = "^33.1.0"
+
+# Linting / formatting
+ruff = "^0.8.4"
+mypy = "^1.13.0"
+
+# Type stubs
+types-passlib = "^1.7.7"
+types-redis = "^4.6.0"
+
+# Dev utilities
+pre-commit = "^4.0.1"
+python-dotenv = "^1.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# ---------------------------------------------------------------------------
+# Ruff configuration
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "RUF", # ruff-specific
+]
+ignore = [
+    "B008",  # do not perform function calls in default arguments (FastAPI Depends)
+    "N805",  # first argument of a method should be named self (Pydantic validators)
+    "RUF012",# mutable class attributes should be annotated with ClassVar (SQLAlchemy)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # allow assert in tests
+
+# ---------------------------------------------------------------------------
+# MyPy configuration
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
+exclude = ["alembic/"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# ---------------------------------------------------------------------------
+# Pytest configuration
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "-q",
+]
+markers = [
+    "unit: fast unit tests with no external dependencies",
+    "integration: tests that require database and Redis",
+    "slow: slow tests",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/telemetry/*", "alembic/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 70

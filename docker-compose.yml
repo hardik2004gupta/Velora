@@ -1,0 +1,112 @@
+# =============================================================================
+# Velora — Local Development Docker Compose
+# =============================================================================
+# Starts: FastAPI backend, Next.js frontend, PostgreSQL, Redis
+#
+# Usage:
+#   docker-compose up           # start all services
+#   docker-compose up backend   # start backend + dependencies only
+#   docker-compose down -v      # stop and remove volumes
+
+version: "3.9"
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: velora-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: velora
+      POSTGRES_PASSWORD: velora
+      POSTGRES_DB: velora
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U velora -d velora"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: velora-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Backend (FastAPI)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: velora-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app                # hot-reload via uvicorn --reload
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql+asyncpg://velora:velora@postgres:5432/velora
+      REDIS_URL: redis://redis:6379/0
+      LOG_FORMAT: console
+      LOG_LEVEL: DEBUG
+    env_file:
+      - ./backend/.env               # local overrides (API keys, secrets)
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Next.js)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: velora-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules           # preserve node_modules inside container
+      - /app/.next                  # preserve Next.js build cache
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: velora-network
