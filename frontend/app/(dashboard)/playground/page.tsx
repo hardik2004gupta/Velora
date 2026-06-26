@@ -28,6 +28,7 @@ export default function PlaygroundPage() {
     selectedStrategy,
     manualProvider,
     selectedModel,
+    conversationId,
     addMessage,
     updateLastAssistantMessage,
     setError,
@@ -98,6 +99,7 @@ export default function PlaygroundPage() {
           model: selectedModel || undefined,
           max_tokens: 2048,
           temperature: 0.7,
+          conversation_id: conversationId,
         },
         controller.signal
       );
@@ -134,6 +136,7 @@ export default function PlaygroundPage() {
     selectedStrategy,
     manualProvider,
     selectedModel,
+    conversationId,
     addMessage,
     updateLastAssistantMessage,
     setError,

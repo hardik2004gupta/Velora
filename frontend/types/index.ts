@@ -47,30 +47,46 @@ export interface RoutingDecision {
   reason: string;
 }
 
-export interface RequestRecord {
+// Summary view — prompt is truncated server-side to 200 chars
+export interface RequestSummary {
   id: string;
-  user_id: string;
+  request_id: string | null;
+  conversation_id: string | null;
   provider: string;
   model: string;
   routing_strategy: string;
-  prompt_tokens: number;
-  completion_tokens: number;
+  prompt: string | null;
   total_tokens: number;
   cost_usd: number;
   latency_ms: number | null;
   cache_hit: boolean;
   status: "success" | "error" | "timeout";
-  error_message: string | null;
-  routing_decision: RoutingDecision | null;
   created_at: string;
 }
 
-export interface AnalyticsOverview {
+// Full detail record
+export interface RequestRecord extends RequestSummary {
+  routing_reason: string | null;
+  response: string | null;
+  prompt_tokens: number;
+  completion_tokens: number;
+  error_message: string | null;
+  routing_decision: RoutingDecision | null;
+}
+
+export interface RequestListResponse {
+  items: RequestSummary[];
+  total: number;
+  page: number;
+  limit: number;
+  has_next: boolean;
+}
+
+export interface DashboardOverview {
   total_requests: number;
-  total_cost_usd: number;
+  total_conversations: number;
   avg_latency_ms: number;
-  cache_hit_rate: number;
-  error_rate: number;
+  total_cost_usd: number;
   period_days: number;
 }
 

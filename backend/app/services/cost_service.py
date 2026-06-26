@@ -1,75 +1,62 @@
-"""
-Cost calculation service.
+"""Cost calculator service — centralised pricing logic.
 
-Converts token counts into USD cost using the static COST_TABLE.
-This is the only place in the codebase that performs cost arithmetic.
-
-Usage::
-
-    from app.services.cost_service import CostService
-
-    cost = CostService.calculate(
-        provider="openai",
-        model="gpt-4o-mini",
-        prompt_tokens=100,
-        completion_tokens=250,
-    )
+All pricing lives in ``core/constants.COST_TABLE``.
+Never import prices from anywhere else.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from app.core.constants import COST_TABLE
-from app.core.exceptions import ConfigurationError
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class CostBreakdown:
+    prompt_cost: float       # USD
+    completion_cost: float   # USD
+    total_cost: float        # USD
 
 
 class CostService:
-    """Stateless service for token-to-USD cost calculation."""
+    """Calculates estimated USD cost from token counts and the centralized cost table."""
 
-    @staticmethod
     def calculate(
+        self,
         provider: str,
         model: str,
         prompt_tokens: int,
         completion_tokens: int,
-    ) -> float:
+    ) -> CostBreakdown:
         """
-        Calculate the total cost in USD for a completed request.
+        Return a cost breakdown for a completed request.
 
-        Args:
-            provider: Provider ID (e.g. ``"openai"``).
-            model: Model ID (e.g. ``"gpt-4o-mini"``).
-            prompt_tokens: Number of input tokens billed.
-            completion_tokens: Number of output tokens billed.
-
-        Returns:
-            Total cost in USD, rounded to 8 decimal places.
-
-        Raises:
-            ConfigurationError: If the provider/model combination is not in COST_TABLE.
-        """
-        provider_costs = COST_TABLE.get(provider)
-        if provider_costs is None:
-            raise ConfigurationError(f"Provider '{provider}' not found in COST_TABLE.")
-
-        model_costs = provider_costs.get(model)
-        if model_costs is None:
-            raise ConfigurationError(
-                f"Model '{model}' not found for provider '{provider}' in COST_TABLE."
-            )
-
-        input_cost = (prompt_tokens / 1000) * model_costs["input"]
-        output_cost = (completion_tokens / 1000) * model_costs["output"]
-        return round(input_cost + output_cost, 8)
-
-    @staticmethod
-    def get_cost_per_1k(provider: str, model: str) -> float:
-        """
-        Return a combined cost-per-1K-tokens figure for routing comparisons.
-
-        Uses a 30/70 input/output split as a heuristic for typical requests.
+        Falls back to the provider's average price if the exact model is not in
+        the cost table, and returns zero-cost if the provider is unknown.
         """
         provider_costs = COST_TABLE.get(provider, {})
-        model_costs = provider_costs.get(model, {})
-        input_rate = model_costs.get("input", 0.0)
-        output_rate = model_costs.get("output", 0.0)
-        return 0.30 * input_rate + 0.70 * output_rate
+        model_costs = provider_costs.get(model)
+
+        if model_costs is None:
+            all_costs = list(provider_costs.values())
+            if all_costs:
+                input_rate = sum(c["input"] for c in all_costs) / len(all_costs)
+                output_rate = sum(c["output"] for c in all_costs) / len(all_costs)
+            else:
+                input_rate = output_rate = 0.0
+            log.warning("cost_table_miss", provider=provider, model=model)
+        else:
+            input_rate = model_costs["input"]
+            output_rate = model_costs["output"]
+
+        prompt_cost = (prompt_tokens / 1_000) * input_rate
+        completion_cost = (completion_tokens / 1_000) * output_rate
+
+        return CostBreakdown(
+            prompt_cost=prompt_cost,
+            completion_cost=completion_cost,
+            total_cost=prompt_cost + completion_cost,
+        )

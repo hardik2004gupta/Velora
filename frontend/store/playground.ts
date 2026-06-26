@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import type { ConversationMessage, RoutingDecision } from "@/types";
 
+function newConversationId(): string {
+  return crypto.randomUUID();
+}
+
 const PREF_KEY = "velora_playground_prefs_v3";
 
 type Strategy = "auto" | "cheapest" | "fastest" | "quality" | "manual";
@@ -29,6 +33,7 @@ interface PlaygroundState {
   manualProvider: string;
   selectedModel: string;
   lastRoutingDecision: RoutingDecision | null;
+  conversationId: string;
 
   addMessage: (msg: ConversationMessage) => void;
   updateLastAssistantMessage: (
@@ -54,6 +59,7 @@ export const usePlaygroundStore = create<PlaygroundState>((set, get) => ({
   manualProvider: prefs.manualProvider,
   selectedModel: prefs.model,
   lastRoutingDecision: null,
+  conversationId: newConversationId(),
 
   addMessage: (msg) =>
     set((s) => ({ messages: [...s.messages, msg] })),
@@ -110,5 +116,5 @@ export const usePlaygroundStore = create<PlaygroundState>((set, get) => ({
     set({ lastRoutingDecision: decision }),
 
   clearConversation: () =>
-    set({ messages: [], isStreaming: false, lastRoutingDecision: null }),
+    set({ messages: [], isStreaming: false, lastRoutingDecision: null, conversationId: newConversationId() }),
 }));
