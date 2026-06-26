@@ -37,6 +37,7 @@ export interface RoutingCandidate {
   health: string;
   quality_score: number;
   score: number;
+  score_breakdown: Record<string, number>;
 }
 
 export interface RoutingDecision {
@@ -108,7 +109,8 @@ export interface ChatMessage {
 
 export interface ChatRequest {
   messages: ChatMessage[];
-  provider: string;
+  routing_strategy: string;
+  manual_provider?: string;
   model?: string;
   max_tokens?: number;
   temperature?: number;
@@ -120,17 +122,19 @@ export interface ChatResponse {
   provider: string;
   model: string;
   finish_reason: string;
+  routing_decision: RoutingDecision;
 }
 
 export type StreamChunkType = "delta" | "done" | "error";
 
 export interface StreamChunk {
   type: StreamChunkType;
-  content?: string;       // type=delta
-  provider?: string;      // type=done
-  model?: string;         // type=done
-  finish_reason?: string; // type=done
-  message?: string;       // type=error
+  content?: string;                    // type=delta
+  provider?: string;                   // type=done
+  model?: string;                      // type=done
+  finish_reason?: string;              // type=done
+  routing_decision?: RoutingDecision;  // type=done
+  message?: string;                    // type=error
 }
 
 // A message in the local conversation UI (extends ChatMessage with metadata)
@@ -141,6 +145,7 @@ export interface ConversationMessage extends ChatMessage {
   provider?: string;
   model?: string;
   error?: string;
+  routing_decision?: RoutingDecision;
 }
 
 // ---------------------------------------------------------------------------

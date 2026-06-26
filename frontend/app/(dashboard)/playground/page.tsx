@@ -12,8 +12,9 @@ import { cn } from "@/lib/utils";
 import { streamChat } from "@/lib/streaming";
 import { usePlaygroundStore } from "@/store/playground";
 import { ChatMessageBubble } from "@/components/playground/chat-message";
-import { ProviderSelector } from "@/components/playground/provider-selector";
-import type { ConversationMessage } from "@/types";
+import { StrategySelector } from "@/components/playground/strategy-selector";
+import { RoutingDecisionCard } from "@/components/playground/routing-decision-card";
+import type { ConversationMessage, RoutingDecision } from "@/types";
 
 let _idCounter = 0;
 function nextId() {
@@ -24,13 +25,15 @@ export default function PlaygroundPage() {
   const {
     messages,
     isStreaming,
-    selectedProvider,
+    selectedStrategy,
+    manualProvider,
     selectedModel,
     addMessage,
     updateLastAssistantMessage,
     setError,
     setStreaming,
-    setProvider,
+    setStrategy,
+    setManualProvider,
     setModel,
     clearConversation,
   } = usePlaygroundStore();
@@ -40,12 +43,10 @@ export default function PlaygroundPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Auto-resize textarea
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -59,7 +60,6 @@ export default function PlaygroundPage() {
 
     setInput("");
 
-    // Build conversation history for the API
     const history = messages.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
@@ -79,8 +79,6 @@ export default function PlaygroundPage() {
       content: "",
       timestamp: new Date(),
       isStreaming: true,
-      provider: selectedProvider,
-      model: selectedModel || undefined,
     };
     addMessage(assistantMsg);
     setStreaming(true);
@@ -89,13 +87,14 @@ export default function PlaygroundPage() {
     abortRef.current = controller;
 
     let accumulated = "";
-    let finalModel = selectedModel || "";
+    let finalRoutingDecision: RoutingDecision | undefined;
 
     try {
       const stream = streamChat(
         {
           messages: [...history, { role: "user", content }],
-          provider: selectedProvider,
+          routing_strategy: selectedStrategy,
+          ...(selectedStrategy === "manual" ? { manual_provider: manualProvider } : {}),
           model: selectedModel || undefined,
           max_tokens: 2048,
           temperature: 0.7,
@@ -108,18 +107,17 @@ export default function PlaygroundPage() {
           accumulated += chunk.content;
           updateLastAssistantMessage(accumulated, false);
         } else if (chunk.type === "done") {
-          finalModel = chunk.model ?? finalModel;
-          updateLastAssistantMessage(accumulated, true);
+          finalRoutingDecision = chunk.routing_decision;
+          updateLastAssistantMessage(accumulated, true, finalRoutingDecision);
         } else if (chunk.type === "error") {
           setError(chunk.message ?? "An error occurred.");
           return;
         }
       }
 
-      updateLastAssistantMessage(accumulated, true);
+      updateLastAssistantMessage(accumulated, true, finalRoutingDecision);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") {
-        // User stopped generation — keep whatever we accumulated
         updateLastAssistantMessage(accumulated, true);
       } else {
         const msg = err instanceof Error ? err.message : "Something went wrong.";
@@ -133,7 +131,8 @@ export default function PlaygroundPage() {
     input,
     isStreaming,
     messages,
-    selectedProvider,
+    selectedStrategy,
+    manualProvider,
     selectedModel,
     addMessage,
     updateLastAssistantMessage,
@@ -146,12 +145,10 @@ export default function PlaygroundPage() {
   }, []);
 
   const retryLast = useCallback(() => {
-    // Find the last user message and re-send from there
     const lastUserIdx = [...messages].reverse().findIndex((m) => m.role === "user");
     if (lastUserIdx === -1) return;
     const lastUser = messages[messages.length - 1 - lastUserIdx];
     setInput(lastUser.content);
-    // Remove the last assistant message (error or empty)
     usePlaygroundStore.setState((s) => ({
       messages: s.messages.filter((_, i) => i < s.messages.length - 1),
     }));
@@ -171,20 +168,20 @@ export default function PlaygroundPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
-      {/* ── Toolbar ──────────────────────────────────────────────── */}
+      {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-border/50 px-6 py-3">
         <div>
           <h1 className="text-lg font-semibold">AI Playground</h1>
           <p className="text-xs text-muted-foreground">
-            Select a provider and start chatting
+            Choose a routing strategy and start chatting
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ProviderSelector
-            selectedProvider={selectedProvider}
-            selectedModel={selectedModel}
-            onProviderChange={setProvider}
-            onModelChange={setModel}
+          <StrategySelector
+            strategy={selectedStrategy}
+            manualProvider={manualProvider}
+            onStrategyChange={setStrategy}
+            onManualProviderChange={setManualProvider}
             disabled={isStreaming}
           />
           {!isEmpty && (
@@ -201,29 +198,33 @@ export default function PlaygroundPage() {
         </div>
       </div>
 
-      {/* ── Messages ─────────────────────────────────────────────── */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
-          <EmptyState provider={selectedProvider} onSuggestion={setInput} />
+          <EmptyState strategy={selectedStrategy} onSuggestion={setInput} />
         ) : (
           <div className="mx-auto max-w-3xl px-4 py-6">
             {messages.map((msg, i) => (
-              <ChatMessageBubble
-                key={msg.id}
-                message={msg}
-                onRetry={
-                  msg.role === "assistant" && !isStreaming && i === messages.length - 1
-                    ? retryLast
-                    : undefined
-                }
-              />
+              <div key={msg.id}>
+                <ChatMessageBubble
+                  message={msg}
+                  onRetry={
+                    msg.role === "assistant" && !isStreaming && i === messages.length - 1
+                      ? retryLast
+                      : undefined
+                  }
+                />
+                {msg.role === "assistant" && !msg.isStreaming && msg.routing_decision && (
+                  <RoutingDecisionCard decision={msg.routing_decision} />
+                )}
+              </div>
             ))}
             <div ref={bottomRef} />
           </div>
         )}
       </div>
 
-      {/* ── Input ────────────────────────────────────────────────── */}
+      {/* Input */}
       <div className="border-t border-border/50 bg-background px-4 py-4">
         <div className="mx-auto max-w-3xl">
           <div className="flex items-end gap-3 rounded-xl border border-border/50 bg-card px-4 py-3 shadow-sm focus-within:border-velora-500/50">
@@ -271,38 +272,51 @@ export default function PlaygroundPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Empty state with prompt suggestions
+// Empty state
 // ---------------------------------------------------------------------------
 
 const SUGGESTIONS: Record<string, string[]> = {
-  openai: [
+  auto: [
     "Explain how transformer attention works",
     "Write a Python async HTTP client",
     "What is the difference between TCP and UDP?",
     "Summarise the CAP theorem",
   ],
-  anthropic: [
-    "Analyse the trade-offs of microservices vs monolith",
-    "Write a concise explanation of gradient descent",
-    "What makes a good API design?",
-    "Help me debug this TypeScript error: ...",
+  cheapest: [
+    "Write a regex to validate email addresses",
+    "Explain REST vs GraphQL in one paragraph",
+    "Give me 5 names for a developer tool startup",
+    "What is the time complexity of quicksort?",
   ],
-  gemini: [
-    "Compare React 18 and React 19 features",
-    "Explain rate limiting strategies",
-    "Write a SQL query for a leaderboard",
-    "What is the difference between JWT and session auth?",
+  fastest: [
+    "Translate 'Hello, world!' to French",
+    "What is 17 × 19?",
+    "One sentence: what is idempotency?",
+    "Fix this: console.log('Hello World)",
+  ],
+  quality: [
+    "Analyse the trade-offs of microservices vs monolith",
+    "Write a detailed explanation of gradient descent",
+    "What makes a great API design? Give examples.",
+    "Compare React 18 and React 19 with code samples",
+  ],
+  manual: [
+    "Explain how transformer attention works",
+    "Write a Python async HTTP client",
+    "Compare REST and GraphQL",
+    "What is the CAP theorem?",
   ],
 };
 
 function EmptyState({
-  provider,
+  strategy,
   onSuggestion,
 }: {
-  provider: string;
+  strategy: string;
   onSuggestion: (s: string) => void;
 }) {
-  const suggestions = SUGGESTIONS[provider] ?? SUGGESTIONS.openai;
+  const suggestions = SUGGESTIONS[strategy] ?? SUGGESTIONS.auto;
+  const label = strategy.charAt(0).toUpperCase() + strategy.slice(1);
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6 px-4 py-12 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-velora-500/10">
@@ -311,8 +325,9 @@ function EmptyState({
       <div className="space-y-1.5">
         <h2 className="text-xl font-semibold">Start a conversation</h2>
         <p className="text-sm text-muted-foreground">
-          Ask anything — your message goes directly to{" "}
-          <span className="capitalize text-foreground">{provider}</span>.
+          Using{" "}
+          <span className="text-foreground font-medium">{label}</span> routing —
+          Velora will select the best provider automatically.
         </p>
       </div>
       <div className="grid w-full max-w-xl grid-cols-2 gap-2">

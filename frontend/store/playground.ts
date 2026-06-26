@@ -1,38 +1,47 @@
 import { create } from "zustand";
-import type { ConversationMessage } from "@/types";
+import type { ConversationMessage, RoutingDecision } from "@/types";
 
-// Persisted provider/model preference (client-side only, replaced by server
-// settings in a future phase).
-const PREF_KEY = "velora_playground_prefs";
+const PREF_KEY = "velora_playground_prefs_v3";
 
-function loadPrefs(): { provider: string; model: string } {
-  if (typeof window === "undefined") return { provider: "openai", model: "" };
+type Strategy = "auto" | "cheapest" | "fastest" | "quality" | "manual";
+
+function loadPrefs(): { strategy: Strategy; manualProvider: string; model: string } {
+  if (typeof window === "undefined")
+    return { strategy: "auto", manualProvider: "openai", model: "" };
   try {
     const raw = localStorage.getItem(PREF_KEY);
     if (raw) return JSON.parse(raw);
   } catch {
     // ignore
   }
-  return { provider: "openai", model: "" };
+  return { strategy: "auto", manualProvider: "openai", model: "" };
 }
 
-function savePrefs(provider: string, model: string) {
+function savePrefs(strategy: Strategy, manualProvider: string, model: string) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(PREF_KEY, JSON.stringify({ provider, model }));
+  localStorage.setItem(PREF_KEY, JSON.stringify({ strategy, manualProvider, model }));
 }
 
 interface PlaygroundState {
   messages: ConversationMessage[];
   isStreaming: boolean;
-  selectedProvider: string;
+  selectedStrategy: Strategy;
+  manualProvider: string;
   selectedModel: string;
+  lastRoutingDecision: RoutingDecision | null;
 
   addMessage: (msg: ConversationMessage) => void;
-  updateLastAssistantMessage: (content: string, done?: boolean) => void;
+  updateLastAssistantMessage: (
+    content: string,
+    done?: boolean,
+    routingDecision?: RoutingDecision
+  ) => void;
   setError: (error: string) => void;
   setStreaming: (v: boolean) => void;
-  setProvider: (provider: string) => void;
+  setStrategy: (strategy: Strategy) => void;
+  setManualProvider: (provider: string) => void;
   setModel: (model: string) => void;
+  setLastRoutingDecision: (decision: RoutingDecision | null) => void;
   clearConversation: () => void;
 }
 
@@ -41,13 +50,15 @@ const prefs = loadPrefs();
 export const usePlaygroundStore = create<PlaygroundState>((set, get) => ({
   messages: [],
   isStreaming: false,
-  selectedProvider: prefs.provider,
+  selectedStrategy: prefs.strategy,
+  manualProvider: prefs.manualProvider,
   selectedModel: prefs.model,
+  lastRoutingDecision: null,
 
   addMessage: (msg) =>
     set((s) => ({ messages: [...s.messages, msg] })),
 
-  updateLastAssistantMessage: (content, done = false) =>
+  updateLastAssistantMessage: (content, done = false, routingDecision) =>
     set((s) => {
       const msgs = [...s.messages];
       const last = msgs[msgs.length - 1];
@@ -56,9 +67,13 @@ export const usePlaygroundStore = create<PlaygroundState>((set, get) => ({
           ...last,
           content,
           isStreaming: !done,
+          ...(routingDecision ? { routing_decision: routingDecision } : {}),
         };
       }
-      return { messages: msgs };
+      return {
+        messages: msgs,
+        ...(routingDecision ? { lastRoutingDecision: routingDecision } : {}),
+      };
     }),
 
   setError: (error) =>
@@ -73,16 +88,27 @@ export const usePlaygroundStore = create<PlaygroundState>((set, get) => ({
 
   setStreaming: (v) => set({ isStreaming: v }),
 
-  setProvider: (provider) => {
-    set({ selectedProvider: provider, selectedModel: "" });
-    savePrefs(provider, "");
+  setStrategy: (strategy) => {
+    const { manualProvider, selectedModel } = get();
+    set({ selectedStrategy: strategy });
+    savePrefs(strategy, manualProvider, selectedModel);
+  },
+
+  setManualProvider: (provider) => {
+    const { selectedStrategy, selectedModel } = get();
+    set({ manualProvider: provider, selectedModel: "" });
+    savePrefs(selectedStrategy, provider, selectedModel);
   },
 
   setModel: (model) => {
-    const { selectedProvider } = get();
+    const { selectedStrategy, manualProvider } = get();
     set({ selectedModel: model });
-    savePrefs(selectedProvider, model);
+    savePrefs(selectedStrategy, manualProvider, model);
   },
 
-  clearConversation: () => set({ messages: [], isStreaming: false }),
+  setLastRoutingDecision: (decision) =>
+    set({ lastRoutingDecision: decision }),
+
+  clearConversation: () =>
+    set({ messages: [], isStreaming: false, lastRoutingDecision: null }),
 }));

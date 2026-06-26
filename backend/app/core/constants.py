@@ -89,6 +89,20 @@ QUALITY_SCORES: dict[str, float] = {
 }
 
 # ---------------------------------------------------------------------------
+# Static latency estimates (ms) — Time To First Token approximations
+# Replaced by Redis rolling average in Phase 4.
+# ---------------------------------------------------------------------------
+
+STATIC_LATENCY_MS: dict[str, int] = {
+    "gpt-4o": 1200,
+    "gpt-4o-mini": 820,
+    "claude-sonnet-4-6": 1400,
+    "claude-haiku-4-5-20251001": 950,
+    "gemini-2.0-pro": 1800,
+    "gemini-2.0-flash": 650,
+}
+
+# ---------------------------------------------------------------------------
 # Auto-routing weights
 # Must sum to 1.0
 # ---------------------------------------------------------------------------
