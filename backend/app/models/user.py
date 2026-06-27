@@ -21,9 +21,6 @@ class User(Base, UUIDMixin, TimestampMixin):
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Relationships
-    memberships: Mapped[list["Membership"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
-        "Membership", back_populates="user", cascade="all, delete-orphan", lazy="select"
-    )
     sessions: Mapped[list["Session"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "Session", back_populates="user", cascade="all, delete-orphan", lazy="select"
     )

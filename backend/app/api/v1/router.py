@@ -13,31 +13,25 @@ from fastapi import APIRouter
 from app.api.v1 import (
     admin,
     analytics,
-    api_keys,
     auth,
     cache,
     chat,
     health,
-    organizations,
     providers,
     requests,
     settings,
     user_keys,
-    users,
 )
 
 v1_router = APIRouter()
 
 v1_router.include_router(health.router, tags=["health"])
 v1_router.include_router(auth.router, prefix="/auth", tags=["auth"])
-v1_router.include_router(users.router, prefix="/users", tags=["users"])
-v1_router.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
 v1_router.include_router(chat.router, prefix="/chat", tags=["chat"])
 v1_router.include_router(requests.router, prefix="/requests", tags=["requests"])
 v1_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 v1_router.include_router(providers.router, prefix="/providers", tags=["providers"])
-v1_router.include_router(api_keys.router, prefix="/organizations/{org_id}/api-keys", tags=["api-keys"])
+v1_router.include_router(user_keys.router, prefix="/api-keys", tags=["api-keys"])
 v1_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 v1_router.include_router(admin.router, prefix="/admin", tags=["admin"])
-v1_router.include_router(user_keys.router, prefix="/api-keys", tags=["api-keys"])
 v1_router.include_router(cache.router, prefix="/cache", tags=["cache"])

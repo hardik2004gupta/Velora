@@ -3,7 +3,7 @@ name = "velora-backend"
 version = "0.1.0"
 description = "Velora — Production-Inspired Multi-Provider AI Inference Platform"
 authors = ["Hardik Gupta <hardikgupta@example.com>"]
-readme = "README.md"
+readme = "../README.md"
 packages = [{ include = "app" }]
 
 [tool.poetry.dependencies]
@@ -34,7 +34,6 @@ httpx = "^0.28.0"
 
 # Logging
 structlog = "^24.4.0"
-python-json-logger = "^3.2.0"
 
 # Telemetry (basic)
 opentelemetry-api = "^1.29.0"

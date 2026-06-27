@@ -50,8 +50,7 @@ env/
 !frontend/lib/
 !frontend/lib/**
 
-# Poetry
-poetry.lock    # keep in version control — remove this line if you prefer
+# Poetry — poetry.lock is committed for reproducible installs
 
 # MyPy
 .mypy_cache/
@@ -79,7 +78,6 @@ node_modules/
 out/
 .turbo/
 next-env.d.ts
-package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
