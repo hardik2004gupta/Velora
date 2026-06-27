@@ -103,8 +103,12 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # CORS
     # -------------------------------------------------------------------------
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: str = "http://localhost:3000"
     cors_allow_credentials: bool = True
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
     # -------------------------------------------------------------------------
     # Logging
@@ -157,14 +161,6 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # Validators
     # -------------------------------------------------------------------------
-
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
-        """Accept either a comma-separated string or a list."""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
 
     @field_validator("log_level")
     @classmethod
