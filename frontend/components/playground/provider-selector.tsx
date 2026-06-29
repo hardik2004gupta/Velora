@@ -4,7 +4,7 @@ import { ChevronDown, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import type { ProvidersResponse, ProviderInfo } from "@/types";
+import type { ProvidersResponse } from "@/types";
 
 interface ProviderSelectorProps {
   selectedProvider: string;
