@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Velora — Multi-Provider AI Inference Platform",
+    default: "Velora: Multi-Provider AI Inference Platform",
     template: "%s | Velora",
   },
   description:
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Hardik Gupta", url: "https://github.com/hardik2004gupta" }],
   openGraph: {
     type: "website",
-    title: "Velora — Multi-Provider AI Inference Platform",
+    title: "Velora: Multi-Provider AI Inference Platform",
     description: "Route AI requests intelligently across OpenAI, Anthropic, and Gemini.",
     siteName: "Velora",
   },
