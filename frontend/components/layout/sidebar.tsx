@@ -16,70 +16,124 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/playground", label: "Playground", icon: MessageSquare },
-  { href: "/inspector", label: "Inspector", icon: Search },
-  { href: "/history", label: "History", icon: History },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/providers", label: "Providers", icon: Zap },
-  { href: "/api-keys", label: "API Keys", icon: Key },
-  { href: "/settings", label: "Settings", icon: Settings },
+const NAV_SECTIONS = [
+  {
+    label: "Core",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/playground", label: "Playground", icon: MessageSquare },
+      { href: "/inspector", label: "Inspector", icon: Search },
+    ],
+  },
+  {
+    label: "Data",
+    items: [
+      { href: "/history", label: "History", icon: History },
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/providers", label: "Providers", icon: Zap },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { href: "/api-keys", label: "API Keys", icon: Key },
+      { href: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
+
+function NavItem({
+  href,
+  label,
+  icon: Icon,
+  isActive,
+}: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  isActive: boolean;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className={cn(
+          "group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150",
+          isActive
+            ? "bg-velora-500/10 text-velora-400"
+            : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+        )}
+      >
+        {/* Left accent bar */}
+        <span
+          className={cn(
+            "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r-full bg-velora-400 transition-all duration-150",
+            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-30"
+          )}
+        />
+        <Icon
+          className={cn(
+            "h-3.5 w-3.5 shrink-0 transition-colors",
+            isActive ? "text-velora-400" : "text-muted-foreground group-hover:text-foreground"
+          )}
+        />
+        {label}
+      </Link>
+    </li>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
 
+  function isActive(href: string) {
+    return pathname === href || pathname.startsWith(href + "/");
+  }
+
   return (
-    <aside className="flex h-full w-[var(--sidebar-width)] flex-col border-r border-border/50 bg-card/50">
+    <aside className="flex h-full w-[var(--sidebar-width)] flex-col border-r border-border/50 bg-card/40">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2.5 border-b border-border/50 px-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-velora-500 to-purple-600 shadow-lg shadow-velora-500/30">
-          <Cpu className="h-4 w-4 text-white" />
+      <Link
+        href="/dashboard"
+        className="flex h-14 items-center gap-2.5 border-b border-border/50 px-4 hover:opacity-90 transition-opacity"
+      >
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-velora-500 to-purple-600 shadow-md shadow-velora-500/25">
+          <Cpu className="h-3.5 w-3.5 text-white" />
         </div>
-        <span className="text-lg font-bold tracking-tight">Velora</span>
-      </div>
+        <span className="text-sm font-bold tracking-tight">Velora</span>
+        <span className="ml-auto rounded-full bg-velora-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-velora-400">
+          v1
+        </span>
+      </Link>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3">
-        <ul className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-velora-500/10 text-velora-400"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  )}
-                >
-                  <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-velora-400")} />
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="flex-1 overflow-y-auto p-2.5 space-y-4">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label}>
+            <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+              {section.label}
+            </p>
+            <ul className="space-y-0.5">
+              {section.items.map((item) => (
+                <NavItem
+                  key={item.href}
+                  {...item}
+                  isActive={isActive(item.href)}
+                />
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
-      {/* Admin link — shown for all (guard is page-level) */}
-      <div className="border-t border-border/50 p-3">
-        <Link
+      {/* Admin */}
+      <div className="border-t border-border/50 p-2.5">
+        <NavItem
           href="/admin"
-          className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            pathname === "/admin"
-              ? "bg-velora-500/10 text-velora-400"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground"
-          )}
-        >
-          <Shield className="h-4 w-4 shrink-0" />
-          Admin
-        </Link>
+          label="Admin"
+          icon={Shield}
+          isActive={isActive("/admin")}
+        />
       </div>
     </aside>
   );

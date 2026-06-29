@@ -168,7 +168,7 @@ export default function PlaygroundPage() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-border/50 px-6 py-3">
         <div>
