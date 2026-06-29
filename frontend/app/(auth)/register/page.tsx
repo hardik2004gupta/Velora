@@ -3,11 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth";
 import { api, APIError } from "@/lib/api";
 import type { RegisterResponse } from "@/types";
@@ -18,6 +17,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,20 +49,27 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="w-full max-w-md border-border/50 shadow-xl">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Create account</CardTitle>
-        <CardDescription>Get started with Velora for free</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full max-w-sm">
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Create account</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Get started with Velora for free
+        </p>
+      </div>
+
+      {/* Card */}
+      <div className="rounded-2xl border border-border/60 bg-card/60 p-7 shadow-xl shadow-black/5 backdrop-blur-sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2.5 text-xs text-destructive">
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {error}
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="full-name">Full name</Label>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="full-name" className="text-xs font-medium">Full name</Label>
             <Input
               id="full-name"
               type="text"
@@ -71,10 +78,12 @@ export default function RegisterPage() {
               onChange={(e) => setFullName(e.target.value)}
               autoComplete="name"
               required
+              className="h-9 text-sm"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-medium">Email</Label>
             <Input
               id="email"
               type="email"
@@ -83,33 +92,57 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               required
+              className="h-9 text-sm"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Min. 8 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-              minLength={8}
-            />
+
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-xs font-medium">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Min. 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                className="h-9 pr-9 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </button>
+            </div>
           </div>
-          <Button type="submit" className="w-full" variant="gradient" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+
+          <Button
+            type="submit"
+            className="mt-1 h-9 w-full bg-velora-600 text-white hover:bg-velora-500 text-sm font-medium"
+            disabled={isLoading}
+          >
+            {isLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
             Create account
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="text-velora-400 hover:underline">
-            Sign in
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+
+        <div className="mt-5 text-center">
+          <p className="text-xs text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/login" className="font-medium text-velora-400 hover:text-velora-300 transition-colors">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-6 text-center text-[11px] text-muted-foreground/50">
+        Velora &middot; Production-Inspired AI Infrastructure
+      </p>
+    </div>
   );
 }

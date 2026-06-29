@@ -94,24 +94,22 @@ function StatCard({
   error?: string | null;
 }) {
   return (
-    <Card className="border-border/50">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <div className={`rounded-md p-2 ${bg}`}>
-          <Icon className={`h-4 w-4 ${color}`} />
+    <div className="rounded-xl border border-border/60 bg-card/60 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <div className={`rounded-lg p-1.5 ${bg}`}>
+          <Icon className={`h-3.5 w-3.5 ${color}`} />
         </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <Skeleton className="h-7 w-28 mb-1" />
-        ) : error ? (
-          <p className="text-sm text-destructive">—</p>
-        ) : (
-          <div className="text-2xl font-bold">{value}</div>
-        )}
-        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-      </CardContent>
-    </Card>
+      </div>
+      {isLoading ? (
+        <Skeleton className="h-7 w-28" />
+      ) : error ? (
+        <p className="text-2xl font-bold text-muted-foreground">—</p>
+      ) : (
+        <div className="text-2xl font-bold tracking-tight">{value}</div>
+      )}
+      {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+    </div>
   );
 }
 
@@ -135,25 +133,23 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>
-        <div className={`${height} w-full`}>
-          {isLoading ? (
-            <Skeleton className="h-full w-full rounded-md" />
-          ) : error ? (
-            <div className="flex h-full items-center justify-center gap-2 text-xs text-destructive">
-              <AlertCircle className="h-3.5 w-3.5" /> {error}
-            </div>
-          ) : (
-            children
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border border-border/60 bg-card/60 p-5">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+      </div>
+      <div className={`${height} w-full`}>
+        {isLoading ? (
+          <Skeleton className="h-full w-full rounded-lg" />
+        ) : error ? (
+          <div className="flex h-full items-center justify-center gap-2 text-xs text-destructive">
+            <AlertCircle className="h-3.5 w-3.5" /> {error}
+          </div>
+        ) : (
+          children
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -222,26 +218,26 @@ export default function AnalyticsPage() {
     period === 1 ? "last 24 hours" : period === 7 ? "last 7 days" : "last 30 days";
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-xl font-bold tracking-tight">Analytics</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Cost, latency, and usage insights across all providers.
           </p>
         </div>
 
         {/* Period selector */}
-        <div className="flex items-center gap-1 rounded-lg border border-border/50 bg-card p-1">
+        <div className="flex items-center gap-0.5 rounded-lg border border-border/60 bg-card/60 p-0.5">
           {PERIODS.map((p) => (
             <button
               key={p.days}
               onClick={() => setPeriod(p.days)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 period === p.days
-                  ? "bg-velora-500 text-white"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-velora-600 text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
               }`}
             >
               {p.label}

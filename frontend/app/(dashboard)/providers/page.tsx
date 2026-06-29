@@ -1,45 +1,46 @@
 "use client";
 
-import { CheckCircle2, AlertTriangle, XCircle, Zap, RefreshCw, Clock } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle2, AlertTriangle, XCircle, RefreshCw, Clock, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProvidersStatus } from "@/hooks/useAnalytics";
 import type { ProviderStatusDetail } from "@/types";
 import { cn } from "@/lib/utils";
 
-// ---------------------------------------------------------------------------
-// Config maps
-// ---------------------------------------------------------------------------
-
 const STATUS_CONFIG = {
   healthy: {
     icon: CheckCircle2,
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/10",
-    badge: "success" as const,
-    dot: "bg-emerald-400",
+    textColor: "text-emerald-400",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/20",
+    dotColor: "bg-emerald-400",
+    label: "Healthy",
+    badgeVariant: "success" as const,
   },
   degraded: {
     icon: AlertTriangle,
-    color: "text-amber-400",
-    bg: "bg-amber-500/10",
-    badge: "secondary" as const,
-    dot: "bg-amber-400",
+    textColor: "text-amber-400",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/20",
+    dotColor: "bg-amber-400",
+    label: "Degraded",
+    badgeVariant: "secondary" as const,
   },
   down: {
     icon: XCircle,
-    color: "text-red-400",
-    bg: "bg-red-500/10",
-    badge: "destructive" as const,
-    dot: "bg-red-400",
+    textColor: "text-red-400",
+    bgColor: "bg-red-500/10",
+    borderColor: "border-red-500/20",
+    dotColor: "bg-red-400",
+    label: "Down",
+    badgeVariant: "destructive" as const,
   },
 };
 
-const DISPLAY_NAMES: Record<string, string> = {
-  openai: "OpenAI",
-  anthropic: "Anthropic",
-  gemini: "Google Gemini",
+const PROVIDER_META: Record<string, { label: string; accentColor: string; dotColor: string; textColor: string }> = {
+  openai: { label: "OpenAI", accentColor: "border-green-500/20", dotColor: "bg-green-400", textColor: "text-green-400" },
+  anthropic: { label: "Anthropic", accentColor: "border-orange-500/20", dotColor: "bg-orange-400", textColor: "text-orange-400" },
+  gemini: { label: "Google Gemini", accentColor: "border-blue-500/20", dotColor: "bg-blue-400", textColor: "text-blue-400" },
 };
 
 const MODEL_LABELS: Record<string, string[]> = {
@@ -47,10 +48,6 @@ const MODEL_LABELS: Record<string, string[]> = {
   anthropic: ["claude-sonnet-4-6", "claude-haiku-4-5"],
   gemini: ["gemini-2.0-flash", "gemini-2.0-pro"],
 };
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 function fmtMs(ms: number | null) {
   if (ms === null) return "—";
@@ -72,153 +69,156 @@ function timeAgo(iso: string) {
   return `${Math.floor(mins / 60)}h ago`;
 }
 
-// ---------------------------------------------------------------------------
-// Provider card
-// ---------------------------------------------------------------------------
+function UptimeBar({ value }: { value: number | null }) {
+  const pct = value ?? 0;
+  const color = pct >= 95 ? "bg-emerald-500" : pct >= 80 ? "bg-amber-500" : "bg-red-500";
+  return (
+    <div className="h-1 w-full overflow-hidden rounded-full bg-muted/50">
+      <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+function MetricCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">{label}</p>
+      <p className="text-sm font-semibold font-mono">{value}</p>
+    </div>
+  );
+}
 
 function ProviderCard({ p }: { p: ProviderStatusDetail }) {
   const cfg = STATUS_CONFIG[p.status] ?? STATUS_CONFIG.down;
-  const Icon = cfg.icon;
+  const StatusIcon = cfg.icon;
+  const meta = PROVIDER_META[p.provider] ?? { label: p.provider, accentColor: "", dotColor: "bg-muted-foreground", textColor: "text-muted-foreground" };
   const models = MODEL_LABELS[p.provider] ?? [];
 
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={cn("rounded-md p-1.5", cfg.bg)}>
-              <Zap className={cn("h-4 w-4", cfg.color)} />
+    <div className={cn(
+      "rounded-xl border bg-card/60 overflow-hidden transition-all duration-200 hover:bg-card/80",
+      p.status === "healthy" ? meta.accentColor : cfg.borderColor
+    )}>
+      {/* Top accent line */}
+      <div className={cn("h-px w-full", cfg.dotColor, "opacity-60")} />
+
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", cfg.bgColor)}>
+              <Zap className={cn("h-4 w-4", cfg.textColor)} />
             </div>
             <div>
-              <CardTitle className="text-base">
-                {DISPLAY_NAMES[p.provider] ?? p.provider}
-              </CardTitle>
-              <p className="text-[11px] text-muted-foreground">
-                {p.last_checked_at ? timeAgo(p.last_checked_at) : "never checked"}
+              <h3 className="text-sm font-semibold">{meta.label}</h3>
+              <p className="text-[10px] text-muted-foreground">
+                {p.last_checked_at ? `Checked ${timeAgo(p.last_checked_at)}` : "Never checked"}
               </p>
             </div>
           </div>
-          <Badge variant={cfg.badge} className="gap-1 text-xs">
-            <Icon className="h-3 w-3" />
-            {p.status}
-          </Badge>
+          <div className={cn("flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium", cfg.textColor, cfg.bgColor, cfg.borderColor)}>
+            <span className={cn("h-1.5 w-1.5 rounded-full", cfg.dotColor)} />
+            {cfg.label}
+          </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+
+        {/* Error message */}
         {p.error_message && (
-          <p className="text-[11px] text-destructive/80 bg-destructive/5 border border-destructive/20 rounded px-2 py-1 font-mono">
-            {p.error_message}
-          </p>
+          <div className="mb-4 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
+            <p className="text-[11px] font-mono text-destructive/80 truncate">{p.error_message}</p>
+          </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Latency</p>
-            <p className="font-medium font-mono">{fmtMs(p.latency_ms)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Avg Latency</p>
-            <p className="font-medium font-mono">{fmtMs(p.avg_latency_ms)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Uptime</p>
-            <p className="font-medium">{fmtUptime(p.uptime_percentage)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Streaming</p>
-            <p className="font-medium text-emerald-400">Supported</p>
-          </div>
+        {/* Metrics */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <MetricCell label="Latency" value={fmtMs(p.latency_ms)} />
+          <MetricCell label="Avg Latency" value={fmtMs(p.avg_latency_ms)} />
         </div>
 
-        <div>
-          <p className="text-xs text-muted-foreground mb-2">Available models</p>
+        {/* Uptime bar */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Uptime</span>
+            <span className="text-xs font-semibold font-mono">{fmtUptime(p.uptime_percentage)}</span>
+          </div>
+          <UptimeBar value={p.uptime_percentage} />
+        </div>
+
+        {/* Streaming + models */}
+        <div className="pt-3 border-t border-border/40">
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">Streaming</span>
+            <span className="text-[11px] font-medium text-emerald-400">Supported</span>
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {models.map((m) => (
-              <Badge key={m} variant="outline" className="text-[10px] font-mono">
+              <span
+                key={m}
+                className="rounded-md border border-border/50 bg-muted/30 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground"
+              >
                 {m}
-              </Badge>
+              </span>
             ))}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Comparison table
-// ---------------------------------------------------------------------------
-
-function ComparisonTable({ providers }: { providers: ProviderStatusDetail[] }) {
-  if (!providers.length) return null;
-
+function ProviderCardSkeleton() {
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Provider Comparison</CardTitle>
-        <CardDescription>Side-by-side health and performance metrics</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {/* Header row */}
-        <div className="grid grid-cols-[1.5fr_auto_auto_auto_auto_auto] gap-x-4 pb-2 border-b border-border/50 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          <span>Provider</span>
-          <span>Status</span>
-          <span>Latency</span>
-          <span>Avg Latency</span>
-          <span>Uptime</span>
-          <span>Streaming</span>
+    <div className="rounded-xl border border-border/60 bg-card/60 overflow-hidden">
+      <div className="h-px w-full bg-muted" />
+      <div className="p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <div className="space-y-1">
+              <Skeleton className="h-3.5 w-20" />
+              <Skeleton className="h-2.5 w-16" />
+            </div>
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full" />
         </div>
-        <div className="divide-y divide-border/30">
-          {providers.map((p) => {
-            const cfg = STATUS_CONFIG[p.status] ?? STATUS_CONFIG.down;
-            const Icon = cfg.icon;
-            return (
-              <div
-                key={p.provider}
-                className="grid grid-cols-[1.5fr_auto_auto_auto_auto_auto] gap-x-4 py-3 text-xs items-center"
-              >
-                <span className="font-medium">
-                  {DISPLAY_NAMES[p.provider] ?? p.provider}
-                </span>
-                <Badge variant={cfg.badge} className="gap-1 text-[10px]">
-                  <Icon className="h-2.5 w-2.5" />
-                  {p.status}
-                </Badge>
-                <span className="font-mono text-muted-foreground">{fmtMs(p.latency_ms)}</span>
-                <span className="font-mono text-muted-foreground">{fmtMs(p.avg_latency_ms)}</span>
-                <span className="text-muted-foreground">{fmtUptime(p.uptime_percentage)}</span>
-                <span className="text-emerald-400">✓</span>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-2 gap-4">
+          <div><Skeleton className="h-2.5 w-12 mb-1" /><Skeleton className="h-4 w-10" /></div>
+          <div><Skeleton className="h-2.5 w-12 mb-1" /><Skeleton className="h-4 w-10" /></div>
         </div>
-      </CardContent>
-    </Card>
+        <Skeleton className="h-1.5 w-full rounded-full" />
+        <div className="flex gap-1.5 pt-2">
+          <Skeleton className="h-5 w-20 rounded-md" />
+          <Skeleton className="h-5 w-24 rounded-md" />
+        </div>
+      </div>
+    </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 
 export default function ProvidersPage() {
   const { data, isLoading, error, refetch, lastRefreshed } = useProvidersStatus(60_000);
 
   const providers = data?.providers ?? [];
+  const healthyCnt = providers.filter((p) => p.status === "healthy").length;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Provider Status</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-xl font-bold tracking-tight">Provider Status</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Real-time health monitoring for all connected AI providers.
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {!isLoading && providers.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              <span className="font-semibold text-emerald-400">{healthyCnt}/{providers.length}</span> healthy
+            </span>
+          )}
           {lastRefreshed && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <Clock className="h-3 w-3" />
               {timeAgo(lastRefreshed.toISOString())}
             </span>
@@ -226,7 +226,7 @@ export default function ProvidersPage() {
           <button
             onClick={refetch}
             disabled={isLoading}
-            className="flex items-center gap-1.5 rounded-md border border-border/50 px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 transition-colors"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
             Refresh
@@ -236,7 +236,7 @@ export default function ProvidersPage() {
 
       {/* Error */}
       {error && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
@@ -244,42 +244,59 @@ export default function ProvidersPage() {
       {/* Provider cards */}
       <div className="grid gap-4 md:grid-cols-3">
         {isLoading
-          ? [1, 2, 3].map((i) => (
-              <Card key={i} className="border-border/50">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-8 w-32" />
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {[1, 2, 3, 4].map((j) => (
-                      <div key={j}>
-                        <Skeleton className="h-3 w-16 mb-1" />
-                        <Skeleton className="h-4 w-12" />
-                      </div>
-                    ))}
-                  </div>
-                  <Skeleton className="h-6 w-full" />
-                </CardContent>
-              </Card>
-            ))
+          ? [1, 2, 3].map((i) => <ProviderCardSkeleton key={i} />)
           : providers.map((p) => <ProviderCard key={p.provider} p={p} />)}
       </div>
 
       {/* Comparison table */}
       {!isLoading && providers.length > 0 && (
-        <ComparisonTable providers={providers} />
+        <div className="rounded-xl border border-border/60 bg-card/60 overflow-hidden">
+          <div className="border-b border-border/50 px-5 py-3.5">
+            <h2 className="text-sm font-semibold">Side-by-side Comparison</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Health and performance metrics</p>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-[1.5fr_auto_auto_auto_auto_auto] gap-x-6 pb-2.5 border-b border-border/40 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <span>Provider</span>
+              <span>Status</span>
+              <span>Latency</span>
+              <span>Avg Latency</span>
+              <span>Uptime</span>
+              <span>Streaming</span>
+            </div>
+            <div className="divide-y divide-border/30">
+              {providers.map((p) => {
+                const cfg = STATUS_CONFIG[p.status] ?? STATUS_CONFIG.down;
+                const meta = PROVIDER_META[p.provider] ?? { label: p.provider, textColor: "text-foreground", dotColor: "" };
+                return (
+                  <div
+                    key={p.provider}
+                    className="grid grid-cols-[1.5fr_auto_auto_auto_auto_auto] gap-x-6 py-3 text-xs items-center"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={cn("h-1.5 w-1.5 rounded-full", meta.dotColor)} />
+                      <span className="font-medium">{meta.label}</span>
+                    </div>
+                    <div className={cn("flex items-center gap-1 text-[11px] font-medium", cfg.textColor)}>
+                      <span className={cn("h-1.5 w-1.5 rounded-full", cfg.dotColor)} />
+                      {cfg.label}
+                    </div>
+                    <span className="font-mono text-muted-foreground tabular-nums">{fmtMs(p.latency_ms)}</span>
+                    <span className="font-mono text-muted-foreground tabular-nums">{fmtMs(p.avg_latency_ms)}</span>
+                    <span className="text-muted-foreground tabular-nums">{fmtUptime(p.uptime_percentage)}</span>
+                    <span className="text-emerald-400 font-medium">Yes</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Footer note */}
-      <div className="rounded-md border border-dashed border-border/50 p-4 text-center">
-        <p className="text-xs text-muted-foreground">
-          Health checks run on demand when this page loads and auto-refresh every 60 seconds.
-          Results are persisted in the database.
-        </p>
-      </div>
+      <p className="text-center text-[11px] text-muted-foreground/50">
+        Health checks auto-refresh every 60 seconds. Results are persisted to the database.
+      </p>
     </div>
   );
 }
