@@ -374,9 +374,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6 py-6">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-velora-500 to-purple-600">
-                <Cpu className="h-2.5 w-2.5 text-white" />
-              </div>
+              <VeloraIcon size={20} />
               <span>
                 Designed &amp; Engineered by{" "}
                 <span className="font-semibold text-foreground">Hardik Gupta</span>
