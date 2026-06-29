@@ -8,7 +8,6 @@ import {
   KeyboardEvent,
 } from "react";
 import { Send, Square, Trash2, MessageSquare } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { streamChat } from "@/lib/streaming";
 import { usePlaygroundStore } from "@/store/playground";
 import { ChatMessageBubble } from "@/components/playground/chat-message";
@@ -35,7 +34,6 @@ export default function PlaygroundPage() {
     setStreaming,
     setStrategy,
     setManualProvider,
-    setModel,
     clearConversation,
   } = usePlaygroundStore();
 
