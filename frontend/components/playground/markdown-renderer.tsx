@@ -67,7 +67,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         components={{
           // Wrap pre/code in a relative container for the copy button
           pre({ children, ...props }) {
-            const codeEl = (children as React.ReactElement)?.props;
+            const codeEl = (children as React.ReactElement)?.props as { children?: unknown } | undefined;
             const codeText = codeEl?.children ?? "";
 
             return (
