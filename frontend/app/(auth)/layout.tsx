@@ -1,5 +1,5 @@
-import { Cpu } from "lucide-react";
 import Link from "next/link";
+import { VeloraIcon } from "@/components/ui/velora-logo";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,9 +11,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <header className="relative z-10 border-b border-border/50 bg-background/60 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center px-6">
           <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-velora-500 to-purple-600">
-              <Cpu className="h-3.5 w-3.5 text-white" />
-            </div>
+            <VeloraIcon size={28} />
             <span className="text-sm font-bold tracking-tight">Velora</span>
           </Link>
         </div>

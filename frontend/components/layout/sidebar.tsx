@@ -12,9 +12,9 @@ import {
   Key,
   Settings,
   Shield,
-  Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VeloraIcon } from "@/components/ui/velora-logo";
 
 const NAV_SECTIONS = [
   {
@@ -97,13 +97,13 @@ export function Sidebar() {
         href="/dashboard"
         className="flex h-14 items-center gap-2.5 border-b border-border/50 px-4 hover:opacity-90 transition-opacity"
       >
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-velora-500 to-purple-600 shadow-md shadow-velora-500/25">
-          <Cpu className="h-3.5 w-3.5 text-white" />
+        <VeloraIcon size={28} />
+        <div className="flex flex-col">
+          <span className="text-sm font-bold tracking-tight leading-none">Velora</span>
+          <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50 mt-0.5 leading-none">
+            AI Inference
+          </span>
         </div>
-        <span className="text-sm font-bold tracking-tight">Velora</span>
-        <span className="ml-auto rounded-full bg-velora-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-velora-400">
-          v1
-        </span>
       </Link>
 
       {/* Navigation */}
