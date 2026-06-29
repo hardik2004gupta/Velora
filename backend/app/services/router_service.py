@@ -154,7 +154,7 @@ class RouterService:
         if strategy == "manual" or manual_provider_id:
             return self._select_manual(candidates, manual_provider_id or "", manual_model_id)
 
-        healthy = [c for c in candidates if c.is_healthy]
+        healthy = [c for c in candidates if c.health != STATUS_DOWN]
         if not healthy:
             raise ServiceUnavailableError("All providers are currently unavailable.")
 

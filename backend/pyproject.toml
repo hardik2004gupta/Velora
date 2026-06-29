@@ -15,7 +15,7 @@ uvicorn = { version = "^0.32.0", extras = ["standard"] }
 
 # Async database
 sqlalchemy = { version = "^2.0.36", extras = ["asyncio"] }
-asyncpg = "^0.30.0"
+asyncpg = "^0.31.0"
 alembic = "^1.14.0"
 
 # Validation
@@ -28,6 +28,7 @@ redis = { version = "^5.2.0", extras = ["hiredis"] }
 # Auth
 pyjwt = { version = "^2.10.0", extras = ["crypto"] }
 passlib = { version = "^1.7.4", extras = ["bcrypt"] }
+bcrypt = ">=4.0.0,<5.0.0"
 
 # HTTP client (for provider calls)
 httpx = "^0.28.0"

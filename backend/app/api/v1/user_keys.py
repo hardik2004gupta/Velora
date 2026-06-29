@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.session import get_db_session
@@ -63,14 +64,14 @@ async def create_key(
 
 @router.delete(
     "/{key_id}",
-    status_code=204,
     summary="Revoke a personal API key",
 )
 async def revoke_key(
     key_id: uuid.UUID,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
-) -> None:
+) -> Response:
     svc = UserKeyService(db)
     await svc.revoke(key_id, user.id)
     await db.commit()
+    return Response(status_code=204)
