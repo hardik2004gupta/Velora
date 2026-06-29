@@ -13,17 +13,16 @@ WORKDIR /build
 
 # Install Poetry
 ENV POETRY_VERSION=1.8.4
-ENV POETRY_HOME=/opt/poetry
 ENV POETRY_VENV_IN_PROJECT=false
 ENV POETRY_NO_INTERACTION=1
 
-RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
+RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}" poetry-plugin-export
 
 # Copy dependency manifests first (layer cache)
 COPY pyproject.toml poetry.lock* ./
 
 # Export to requirements.txt then install to /install
-RUN /opt/poetry/bin/poetry export --without-hashes --without dev -f requirements.txt \
+RUN poetry export --without-hashes --without dev -f requirements.txt \
     | pip install --no-cache-dir --prefix=/install -r /dev/stdin
 
 # ---------------------------------------------------------------------------
